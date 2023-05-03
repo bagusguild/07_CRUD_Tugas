@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Kelas;
 use App\Models\Mahasiswa;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class MahasiswaController extends Controller
 {
@@ -14,6 +16,7 @@ class MahasiswaController extends Controller
      */
     public function index()
     {
+        $user = Auth::user();
         $mahasiswa = Mahasiswa::paginate(5);
         $posts = Mahasiswa::orderBy('Nim', 'desc')->paginate(5);
         return view('mahasiswa.index', compact('mahasiswa'))
@@ -27,7 +30,8 @@ class MahasiswaController extends Controller
      */
     public function create()
     {
-        return view('mahasiswa.create');
+        $kelas = Kelas::all();
+        return view('mahasiswa.create',['kelas' => $kelas]);
     }
 
     /**
@@ -43,7 +47,7 @@ class MahasiswaController extends Controller
             'Nim' => 'required',
             'Nama' => 'required',
             'Email' => 'required',
-            'Kelas' => 'required',
+            // 'Kelas' => 'required',
             'Jurusan' => 'required',
             'No_Handphone' => 'required',
             'TanggalLahir' => 'required',
@@ -51,6 +55,12 @@ class MahasiswaController extends Controller
 
         //fungsi eloquent untuk menambah data
         Mahasiswa::create($request->all());
+
+        $mahasiswa = new Mahasiswa;
+        $kelas = new Kelas;
+        $kelas->id = $request->get('kelas');
+        $mahasiswa->kelas()->associate($kelas);
+        $mahasiswa->save();
 
         //jika data berhasil ditambahkan, akan kembali ke halaman utama
         return redirect()->route('mahasiswa.index')
@@ -80,7 +90,9 @@ class MahasiswaController extends Controller
     {
         //menampilkan detail data dengan menemukan/berdasarkan Nim Mahasiswa
         $Mahasiswa = Mahasiswa::find($Nim);
-        return view('mahasiswa.edit', compact('Mahasiswa'));
+        $user = Auth::user();
+        $kelas = Kelas::all();
+        return view('mahasiswa.edit', compact('Mahasiswa', 'user', 'kelas'));
     }
 
     /**
@@ -97,7 +109,7 @@ class MahasiswaController extends Controller
             'Nim' => 'required',
             'Nama' => 'required',
             'Email' => 'required',
-            'Kelas' => 'required',
+            // 'Kelas' => 'required',
             'Jurusan' => 'required',
             'No_Handphone' => 'required',
             'TanggalLahir' => 'required',
@@ -105,6 +117,8 @@ class MahasiswaController extends Controller
 
         //fungsi eloquent untuk mengupdate data inputan kita
         Mahasiswa::find($Nim)->update($request->all());
+        $kelas = new Kelas;
+        $kelas->id = $request->get('kelas');
 
         //jika data berhasil diupdate, akan kembali ke halaman utama
         return redirect()->route('mahasiswa.index')
